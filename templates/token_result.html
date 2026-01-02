@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>發票消費明細</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 40px;
+    }
+    .detail-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    h1 { border-bottom: 2px solid #38bdf8; padding-bottom: 10px; font-size: 1.5rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th { text-align: left; color: #94a3b8; padding: 12px; border-bottom: 2px solid #334155; }
+    td { padding: 12px; border-bottom: 1px solid #334155; }
+    .price { text-align: right; }
+    .pagination {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      align-items: center;
+    }
+    .pagination a {
+      color: #38bdf8;
+      text-decoration: none;
+      padding: 8px 16px;
+      border: 1px solid #38bdf8;
+      border-radius: 6px;
+    }
+    .pagination a:hover { background: #38bdf8; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="detail-container">
+    <h1>📝 消費清單</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>品項名稱</th>
+          <th>數量</th>
+          <th class="price">單價</th>
+          <th class="price">小計</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data.content %}
+        <tr>
+          <td>{{ item.sequenceNumber }}</td>
+          <td style="color: #38bdf8;">{{ item.item }}</td>
+          <td>{{ item.quantity }}</td>
+          <td class="price">${{ item.unitPrice }}</td>
+          <td class="price" style="font-weight: bold;">${{ item.amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="pagination">
+      {% if data.number > 0 %}
+        <a href="?token={{ token }}&page={{ data.number - 1 }}">« 上一頁</a>
+      {% endif %}
+      <span>第 {{ data.number + 1 }} 頁 / 共 {{ data.totalPages }} 頁</span>
+      {% if data.number + 1 < data.totalPages %}
+        <a href="?token={{ token }}&page={{ data.number + 1 }}">下一頁 »</a>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
