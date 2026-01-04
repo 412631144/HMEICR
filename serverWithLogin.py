@@ -4,18 +4,18 @@ from pymongo import MongoClient
 from passlib.context import CryptContext
 from os import getenv
 from api.AuthorizedModules import EInvoiceAuthenticator
-from bson import ObjectId
+from bson import ObjectId, json_util
 from crypto import encrypt_password, decrypt_password
 from datetime import datetime
 import dotenv
 
 app = Flask(__name__)
 dotenv.load_dotenv()
-app.secret_key = getenv("secret_key")
+app.secret_key = getenv("SECRET_KEY", "default_secret_key")
 
 
 # ---------- MongoDB ----------
-client = MongoClient("mongodb://localhost:27017")#wait to change to user login
+client = MongoClient("mongodb://root:example@mongo:27017")#wait to change to user login
 db = client["myapp"]
 users = db["users"]
 einvoice_login = db["einvoice_login"]
@@ -79,13 +79,44 @@ def login():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return "You are logged in 🎉"
+    return render_template("index.html")
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
+# ---------- Routes for Templates ----------
+@app.route("/")
+def index():
+    if current_user.is_authenticated:
+        # Pass necessary data if needed, or just render the template
+        return render_template("index.html")
+    return render_template("index.html")
+
+@app.route("/token_page")
+def token_page():
+    token = request.args.get("q")
+    page = int(request.args.get("page", 0))
+    
+    if not token:
+        return "Token missing", 400
+    
+    # We need an API instance to fetch data. 
+    # If the user is logged in, we can use their credentials.
+    # If this page is public, we might need a default API or handle it differently.
+    # Assuming logged in user for now based on context.
+    if current_user.is_authenticated:
+        if token == "manual_list":
+             return render_template("token_result.html", token=token, data={})
+
+        api = get_user_api(current_user.id)
+        if api:
+             data = api.getCarrierInvoiceDetail(token, page)
+             return render_template("token_result.html", token=token, data=data)
+    
+    return "Please login to view details", 401
 
 # ---------- User  ----------
 @app.route("/einvoice_login/create", methods=["POST"])
@@ -125,7 +156,7 @@ def create_note():
     receipt.insert_one({
         "owner_id": ObjectId(current_user.id),
         "title": request.form["title"],
-        "currency": request.form["currency"]
+        "currency": request.form["currency"],
         "receipt_date": datetime.strptime(
             request.form["receipt_date"], "%Y-%m-%d"
         )
@@ -154,7 +185,7 @@ def edit_note(receipt_id):
         {
             "$set": {
                 "title": request.form["title"],
-                "currency": request.form["currency"]
+                "currency": request.form["currency"],
                 "receipt_date": datetime.strptime(
                     request.form["receipt_date"], "%Y-%m-%d"
                 )
@@ -174,7 +205,7 @@ def delete_note(receipt_id):
 
 @app.route("/einvoice/invoice_list")
 @login_required
-getSearchCarrierInvoiceListJWTdef invoice_list():
+def invoice_list():
     api = get_user_api(current_user.id)
     if not api:
         flash("No e-invoice credentials found.")
@@ -300,4 +331,4 @@ def getCarrierInvoiceDetail(api, token, page, size):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
