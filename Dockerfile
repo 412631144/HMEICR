@@ -14,4 +14,4 @@ COPY . .
 
 RUN chmod -R a+r /app
 
-CMD ["python", "server.py"]
+CMD ["python", "serverWithLogin.py"]
